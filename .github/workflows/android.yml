@@ -20,12 +20,11 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+        with:
+          gradle-version: '8.9'
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: gradle assembleRelease
 
       - name: Set short SHA
         id: set_sha
@@ -33,7 +32,7 @@ jobs:
 
       - name: Rename APK with commit hash
         run: |
-          mv app/build/outputs/apk/release/app-release-signed.apk \
+          mv app/build/outputs/apk/release/app-release.apk \
              app/build/outputs/apk/release/RelationShit-release-${{ steps.set_sha.outputs.short_sha }}.apk
 
       - name: Upload Release APK
