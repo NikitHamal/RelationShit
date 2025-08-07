@@ -16,10 +16,19 @@ android {
 		versionName "1.0"
 	}
 	
+	signingConfigs {
+		release {
+			storeFile file('keystore.jks')
+			storePassword 'password'
+			keyAlias 'relationshit'
+			keyPassword 'password'
+		}
+	}
 	buildTypes {
 		release {
 			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+			signingConfig signingConfigs.release
 		}
 	}
 	buildFeatures {
