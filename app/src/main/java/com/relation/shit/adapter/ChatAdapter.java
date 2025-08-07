@@ -25,12 +25,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_ERROR = 4;
 
     private List<Message> messageList;
-    private int userMessageMaxWidth; // Field to store max width for user messages
 
-    // Constructor updated to accept max width
-    public ChatAdapter(List<Message> messageList, int userMessageMaxWidth) {
+    public ChatAdapter(List<Message> messageList) {
         this.messageList = messageList;
-        this.userMessageMaxWidth = userMessageMaxWidth;
     }
 
     @Override
@@ -55,12 +52,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_USER) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_user, parent, false);
-            UserMessageViewHolder holder = new UserMessageViewHolder(view);
-            // Apply max width to the TextView in the user message bubble
-            if (holder.messageText != null) {
-                holder.messageText.setMaxWidth(userMessageMaxWidth);
-            }
-            return holder;
+            return new UserMessageViewHolder(view);
         } else if (viewType == VIEW_TYPE_AI) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_ai, parent, false);
             return new AiMessageViewHolder(view);

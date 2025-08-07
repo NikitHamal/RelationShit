@@ -54,48 +54,16 @@ public class QwenApi {
         client.newCall(request).enqueue(callback);
     }
 
-    public void newChat(String model, Callback callback) throws JSONException {
+    public void getChatCompletion(String model, JSONArray messages, Callback callback) throws JSONException {
         JSONObject jsonBody = new JSONObject();
-        jsonBody.put("title", "New Chat");
-        jsonBody.put("models", new JSONArray().put(model));
-        jsonBody.put("chat_mode", "normal");
-        jsonBody.put("chat_type", "t2t");
-        jsonBody.put("timestamp", System.currentTimeMillis());
-
-        RequestBody body = RequestBody.create(jsonBody.toString(), JSON);
-        Request request = createBaseRequest(BASE_URL + "/chats/new")
-                .post(body)
-                .build();
-        client.newCall(request).enqueue(callback);
-    }
-
-    public void getChatCompletion(String chatId, String parentId, String model, JSONArray messages, boolean thinking, boolean webSearch, Callback callback) throws JSONException {
-        JSONObject jsonBody = new JSONObject();
+        jsonBody.put("model", model);
+        jsonBody.put("messages", messages);
         jsonBody.put("stream", true);
         jsonBody.put("incremental_output", true);
-        jsonBody.put("chat_id", chatId);
-        jsonBody.put("model", model);
-        jsonBody.put("parent_id", parentId);
-        jsonBody.put("messages", messages);
-        jsonBody.put("timestamp", System.currentTimeMillis());
-
-        if (webSearch) {
-             jsonBody.put("chat_type", "search");
-             jsonBody.put("feature_config", new JSONObject().put("search_version", "v2"));
-        } else {
-             jsonBody.put("chat_type", "t2t");
-             JSONObject featureConfig = new JSONObject();
-             featureConfig.put("thinking_enabled", thinking);
-             featureConfig.put("output_schema", "phase");
-             if (thinking) {
-                featureConfig.put("thinking_budget", 38912);
-             }
-             jsonBody.put("feature_config", featureConfig);
-        }
 
 
         RequestBody body = RequestBody.create(jsonBody.toString(), JSON);
-        Request request = createBaseRequest(BASE_URL + "/chat/completions?chat_id=" + chatId)
+        Request request = createBaseRequest(BASE_URL + "/chat/completions")
                 .header("x-accel-buffering", "no")
                 .post(body)
                 .build();

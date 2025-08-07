@@ -69,9 +69,6 @@ public class ChatActivity extends AppCompatActivity {
 
   private boolean isAwaitingResponse = false;
 
-  // Max width for user messages (80% of screen width)
-  private int userMessageMaxWidth;
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -110,11 +107,6 @@ public class ChatActivity extends AppCompatActivity {
       finish();
       return;
     }
-
-    // Calculate user message max width (80% of screen width)
-    DisplayMetrics displayMetrics = new DisplayMetrics();
-    getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-    userMessageMaxWidth = (int) (displayMetrics.widthPixels * 0.8);
 
     initializeViews();
     setupToolbar();
@@ -182,6 +174,7 @@ public class ChatActivity extends AppCompatActivity {
               "New Chat with " + currentAgent.getName(),
               currentAgent,
               System.currentTimeMillis());
+      sharedPrefManager.updateConversation(currentConversation); // Save immediately
       messageList = new ArrayList<>();
     } else {
       messageList = currentConversation.getMessages();
@@ -191,8 +184,7 @@ public class ChatActivity extends AppCompatActivity {
   }
 
   private void setupRecyclerView() {
-    // Pass the calculated max width to the adapter
-    chatAdapter = new ChatAdapter(messageList, userMessageMaxWidth);
+    chatAdapter = new ChatAdapter(messageList);
     LinearLayoutManager layoutManager = new LinearLayoutManager(this);
     chatRecyclerview.setLayoutManager(layoutManager);
     chatRecyclerview.setAdapter(chatAdapter);
@@ -278,12 +270,30 @@ public class ChatActivity extends AppCompatActivity {
         messagesArray,
         
         new BaseApiService.ApiResponseCallback<String>() {
+          private Message currentAiMessage;
+
+          @Override
+          public void onUpdate(String partialResult) {
+              runOnUiThread(() -> {
+                  if (currentAiMessage == null) {
+                      removeLastMessage(); // Remove "Thinking..." message
+                      currentAiMessage = new Message("ai", partialResult);
+                      addMessageToChat(currentAiMessage);
+                  } else {
+                      currentAiMessage.setContent(currentAiMessage.getContent() + partialResult);
+                      chatAdapter.notifyItemChanged(messageList.size() - 1);
+                  }
+              });
+          }
+
           @Override
           public void onSuccess(String aiContent) {
             runOnUiThread(
                 () -> {
-                  removeLastMessage(); // Remove thinking message
-                  addMessageToChat(new Message("ai", aiContent));
+                  if (currentAiMessage == null) { // Handle non-streaming case or empty stream
+                      removeLastMessage();
+                      addMessageToChat(new Message("ai", aiContent));
+                  }
 
                   if (currentConversation.getTitle().startsWith("New Chat with")
                       && messageList.size()
@@ -406,39 +416,6 @@ public class ChatActivity extends AppCompatActivity {
 
     String apiProvider = currentAgent.getApiProvider();
 
-    if ("Alibaba".equals(apiProvider)) {
-        // For Qwen, we only send the current message. History is managed server-side.
-        JSONObject qwenMessage = new JSONObject();
-        qwenMessage.put("fid", UUID.randomUUID().toString());
-        qwenMessage.put("parentId", currentConversation.getQwenParentId());
-        qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
-        qwenMessage.put("role", "user");
-        qwenMessage.put("content", userMessageContent);
-        qwenMessage.put("user_action", "chat");
-        qwenMessage.put("files", new JSONArray());
-        qwenMessage.put("timestamp", System.currentTimeMillis());
-        qwenMessage.put("models", new JSONArray().put(currentAgent.getModel()));
-        qwenMessage.put("chat_type", "t2t");
-
-        JSONObject featureConfig = new JSONObject();
-        featureConfig.put("thinking_enabled", true); // This could be a setting
-        featureConfig.put("output_schema", "phase");
-        featureConfig.put("thinking_budget", 38912);
-        qwenMessage.put("feature_config", featureConfig);
-
-        JSONObject extra = new JSONObject();
-        JSONObject meta = new JSONObject();
-        meta.put("subChatType", "t2t");
-        extra.put("meta", meta);
-        qwenMessage.put("extra", extra);
-
-        qwenMessage.put("sub_chat_type", "t2t");
-        qwenMessage.put("parent_id", currentConversation.getQwenParentId());
-
-        return new JSONArray().put(qwenMessage);
-    }
-
-
     // Add agent prompt
     if ("Deepseek".equals(apiProvider)) {
       JSONObject agentPromptMessage = new JSONObject();
@@ -453,6 +430,12 @@ public class ChatActivity extends AppCompatActivity {
       agentPromptContent.put("role", "user");
       agentPromptContent.put("parts", new JSONArray().put(agentPromptPart));
       messagesArray.put(agentPromptContent);
+      currentContextLength += currentAgent.getPrompt().length();
+    } else if ("Alibaba".equals(apiProvider)) {
+      JSONObject agentPromptMessage = new JSONObject();
+      agentPromptMessage.put("role", "system");
+      agentPromptMessage.put("content", currentAgent.getPrompt());
+      messagesArray.put(agentPromptMessage);
       currentContextLength += currentAgent.getPrompt().length();
     }
 
@@ -499,7 +482,7 @@ public class ChatActivity extends AppCompatActivity {
       if (!msg.getType().equals("thinking") && !msg.getType().equals("error")) {
         String msgContent = msg.getContent();
         if (currentContextLength + msgContent.length() < currentMaxContextChars) {
-          if ("Deepseek".equals(apiProvider)) {
+          if ("Deepseek".equals(apiProvider) || "Alibaba".equals(apiProvider)) {
             JSONObject msgObject = new JSONObject();
             msgObject.put("role", msg.getRole());
             msgObject.put("content", msgContent);
@@ -521,7 +504,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     // Add current user message
-    if ("Deepseek".equals(apiProvider)) {
+    if ("Deepseek".equals(apiProvider) || "Alibaba".equals(apiProvider)) {
       JSONObject currentUserMsgObject = new JSONObject();
       currentUserMsgObject.put("role", "user");
       currentUserMsgObject.put("content", userMessageContent);
@@ -533,38 +516,6 @@ public class ChatActivity extends AppCompatActivity {
       currentUserContent.put("role", "user");
       currentUserContent.put("parts", new JSONArray().put(currentUserPart));
       messagesArray.put(currentUserContent);
-    } else if ("Alibaba".equals(apiProvider)) {
-        // Qwen has a very specific message format
-        JSONArray qwenMessages = new JSONArray();
-        JSONObject qwenMessage = new JSONObject();
-        qwenMessage.put("fid", UUID.randomUUID().toString());
-        qwenMessage.put("parentId", currentConversation.getQwenParentId()); // This will be null for the first message
-        qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
-        qwenMessage.put("role", "user");
-        qwenMessage.put("content", userMessageContent);
-        qwenMessage.put("user_action", "chat");
-        qwenMessage.put("files", new JSONArray());
-        qwenMessage.put("timestamp", System.currentTimeMillis());
-        qwenMessage.put("models", new JSONArray().put(currentAgent.getModel()));
-        qwenMessage.put("chat_type", "t2t");
-
-        JSONObject featureConfig = new JSONObject();
-        featureConfig.put("thinking_enabled", true); // Or get from agent settings
-        featureConfig.put("output_schema", "phase");
-        featureConfig.put("thinking_budget", 38912);
-        qwenMessage.put("feature_config", featureConfig);
-
-        JSONObject extra = new JSONObject();
-        JSONObject meta = new JSONObject();
-        meta.put("subChatType", "t2t");
-        extra.put("meta", meta);
-        qwenMessage.put("extra", extra);
-
-        qwenMessage.put("sub_chat_type", "t2t");
-        qwenMessage.put("parent_id", currentConversation.getQwenParentId());
-
-        qwenMessages.put(qwenMessage);
-        return qwenMessages; // Return the new format
     }
 
 
