@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/md_theme_surfaceContainer"
+    app:strokeColor="@color/md_theme_outlineVariant"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Journal Entry Title -->
+        <TextView
+            android:id="@+id/text_journal_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="@color/md_theme_onSurface"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginBottom="4dp"
+            android:text="My First Journal Entry" /> <!-- Placeholder text -->
+
+        <!-- Journal Entry Content Preview -->
+        <TextView
+            android:id="@+id/text_journal_content_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/md_theme_onSurfaceVariant"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:layout_marginBottom="8dp"
+            android:text="This is a preview of my journal entry content. It should be concise and give a quick idea of what the entry is about." /> <!-- Placeholder text -->
+
+        <!-- Timestamp -->
+        <TextView
+            android:id="@+id/text_journal_timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="@color/md_theme_outline"
+            android:text="Jul 09, 2025 15:57" /> <!-- Placeholder text -->
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

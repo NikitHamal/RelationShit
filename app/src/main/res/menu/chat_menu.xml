@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_knowledge_base"
+        android:title="Knowledge Base" />
+    <item
+        android:id="@+id/action_insights"
+        android:title="Insights" />
+    <!-- Add other menu items here if needed -->
+</menu>

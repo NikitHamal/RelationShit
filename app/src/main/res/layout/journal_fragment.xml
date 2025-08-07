@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surface">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_theme_surface"
+        android:elevation="4dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/journal_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:title="My Journal"
+            app:titleTextColor="@color/md_theme_onSurface"
+            app:titleTextAppearance="?attr/textAppearanceHeadlineSmall" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- NestedScrollView to contain the new button and RecyclerView -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp">
+
+            <!-- New Material Button for adding journal entries -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_add_journal_entry_top"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add New Entry"
+                android:layout_marginBottom="16dp"
+                app:cornerRadius="30dp"
+                style="@style/Widget.Material3.Button"
+                app:icon="@drawable/icon_add_round"
+                app:iconTint="?attr/colorOnPrimary" />
+
+            <!-- RecyclerView for Journal Entries -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/journal_entries_recyclerview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp" /> <!-- Adjusted padding for bottom -->
+
+            <!-- Empty State View -->
+            <LinearLayout
+                android:id="@+id/empty_journal_state"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone"
+                android:padding="32dp">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/icon_edit_note_round"
+                    app:tint="@color/md_theme_onSurfaceVariant"
+                    android:contentDescription="No Journal Entries Icon"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Journal Entries Yet"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="@color/md_theme_onSurface"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tap 'Add New Entry' to write your first journal entry."
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@color/md_theme_onSurfaceVariant"
+                    android:gravity="center" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
