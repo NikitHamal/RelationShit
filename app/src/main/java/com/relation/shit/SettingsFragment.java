@@ -9,6 +9,9 @@ import android.widget.EditText;
 import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 import android.widget.LinearLayout; // Import LinearLayout
+import android.content.ClipboardManager;
+import android.content.ClipData;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -303,31 +306,41 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
 
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    if (response.isSuccessful() && response.body() != null) {
-                        try {
-                            JSONObject jsonResponse = new JSONObject(response.body().string());
-                            JSONArray data = jsonResponse.getJSONArray("data");
-                            for (int i = 0; i < data.length(); i++) {
-                                JSONObject modelObject = data.getJSONObject(i);
-                                String modelId = modelObject.optString("id");
-                                String modelName = modelObject.optString("name");
-                                boolean supportsThinking = false;
-                                JSONObject info = modelObject.optJSONObject("info");
-                                if (info != null) {
-                                    JSONObject capabilities = info.optJSONObject("capabilities");
-                                    if (capabilities != null) {
-                                        supportsThinking = capabilities.optBoolean("thinking", false);
+                    final String responseBody = response.body() != null ? response.body().string() : null;
+
+                    if (response.isSuccessful() && responseBody != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            try {
+                                JSONObject jsonResponse = new JSONObject(responseBody);
+                                JSONArray data = jsonResponse.getJSONArray("data");
+                                for (int i = 0; i < data.length(); i++) {
+                                    JSONObject modelObject = data.getJSONObject(i);
+                                    String modelId = modelObject.optString("id");
+                                    String modelName = modelObject.optString("name");
+                                    boolean supportsThinking = false;
+                                    JSONObject info = modelObject.optJSONObject("info");
+                                    if (info != null) {
+                                        JSONObject capabilities = info.optJSONObject("capabilities");
+                                        if (capabilities != null) {
+                                            supportsThinking = capabilities.optBoolean("thinking", false);
+                                        }
                                     }
+                                    models.add(modelName + " (" + modelId + ")" + (supportsThinking ? " (Thinking)" : ""));
                                 }
-                                models.add(modelName + " (" + modelId + ")" + (supportsThinking ? " (Thinking)" : ""));
+                            } catch (JSONException e) {
+                                ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("Qwen API Response", responseBody);
+                                clipboard.setPrimaryClip(clip);
+                                Toast.makeText(requireContext(), "Failed to parse Qwen models. Raw response copied to clipboard.", Toast.LENGTH_LONG).show();
+                                Log.e("SettingsFragment", "Failed to parse Qwen models. Response: " + responseBody, e);
+                            } finally {
+                                latch.countDown();
                             }
-                        } catch (JSONException e) {
-                            requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Failed to parse Qwen models: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                        }
+                        });
                     } else {
                         requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Failed to fetch Qwen models: " + response.message(), Toast.LENGTH_LONG).show());
+                        latch.countDown();
                     }
-                    latch.countDown();
                 }
             });
         }
