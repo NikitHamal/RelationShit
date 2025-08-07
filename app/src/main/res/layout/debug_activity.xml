@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="?attr/colorSurface">
+
+    <TextView
+        android:id="@+id/crash_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="An error occurred"
+        android:textAppearance="?attr/textAppearanceHeadline5"
+        android:textColor="?attr/colorError"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"/>
+
+    <ScrollView
+        android:id="@+id/scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/crash_title"
+        android:layout_above="@+id/button_layout"
+        android:background="@drawable/debug_log_background"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/crash_log_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crash log will be shown here."
+            android:textColor="?attr/colorOnSurface"
+            android:typeface="monospace"
+            android:textIsSelectable="true"/>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/button_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_copy_log"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Copy Log"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginEnd="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_restart_app"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Restart App"
+            style="@style/Widget.Material3.Button"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+</RelativeLayout>

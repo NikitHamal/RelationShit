@@ -171,8 +171,8 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                     }
 
 
-                    if (name.isEmpty() || prompt.isEmpty() || emoji.isEmpty() || apiProvider == null || model == null) {
-                        Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
+                    if (name.isEmpty() || prompt.isEmpty() || emoji.isEmpty() || apiProvider.isEmpty() || model == null || model.isEmpty()) {
+                        Toast.makeText(requireContext(), "Please fill all fields and select a model", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
