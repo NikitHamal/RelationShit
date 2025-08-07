@@ -34,38 +34,44 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Deepseek API Configuration"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginBottom="8dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/text_input_deepseek_api_key"
+                <LinearLayout
+                    android:id="@+id/deepseek_api_key_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Deepseek API Key"
-                    app:endIconMode="password_toggle"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deepseek API Configuration"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edit_text_deepseek_api_key"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/text_input_deepseek_api_key"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPassword"
+                        android:hint="Deepseek API Key"
+                        app:endIconMode="password_toggle"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_text_deepseek_api_key"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textSize="14sp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_save_deepseek_api_key"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Save Deepseek API Key"
+                        android:layout_marginTop="16dp"
                         android:textSize="14sp" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_save_deepseek_api_key"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Save Deepseek API Key"
-                    android:layout_marginTop="16dp"
-                    android:textSize="14sp" />
+                </LinearLayout>
 
                 <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
@@ -74,38 +80,44 @@
                     android:layout_marginBottom="20dp"
                     app:dividerColor="@color/md_theme_outlineVariant" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Gemini API Configuration"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginBottom="8dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/text_input_gemini_api_key"
+                <LinearLayout
+                    android:id="@+id/gemini_api_key_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Gemini API Key"
-                    app:endIconMode="password_toggle"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gemini API Configuration"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edit_text_gemini_api_key"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/text_input_gemini_api_key"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPassword"
+                        android:hint="Gemini API Key"
+                        app:endIconMode="password_toggle"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_text_gemini_api_key"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textSize="14sp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_save_gemini_api_key"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Save Gemini API Key"
+                        android:layout_marginTop="16dp"
                         android:textSize="14sp" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_save_gemini_api_key"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Save Gemini API Key"
-                    android:layout_marginTop="16dp"
-                    android:textSize="14sp" />
+                </LinearLayout>
 
                 <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
