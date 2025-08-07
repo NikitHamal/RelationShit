@@ -416,6 +416,38 @@ public class ChatActivity extends AppCompatActivity {
 
     String apiProvider = currentAgent.getApiProvider();
 
+    if ("Alibaba".equals(apiProvider)) {
+        // For Qwen, we only send the current message. History is managed server-side.
+        JSONObject qwenMessage = new JSONObject();
+        qwenMessage.put("fid", UUID.randomUUID().toString());
+        qwenMessage.put("parentId", currentConversation.getQwenParentId()); // This will be null for the first message
+        qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
+        qwenMessage.put("role", "user");
+        qwenMessage.put("content", userMessageContent);
+        qwenMessage.put("user_action", "chat");
+        qwenMessage.put("files", new JSONArray());
+        qwenMessage.put("timestamp", System.currentTimeMillis());
+        qwenMessage.put("models", new JSONArray().put(currentAgent.getModel()));
+        qwenMessage.put("chat_type", "t2t");
+
+        JSONObject featureConfig = new JSONObject();
+        featureConfig.put("thinking_enabled", true); // This could be a setting
+        featureConfig.put("output_schema", "phase");
+        featureConfig.put("thinking_budget", 38912);
+        qwenMessage.put("feature_config", featureConfig);
+
+        JSONObject extra = new JSONObject();
+        JSONObject meta = new JSONObject();
+        meta.put("subChatType", "t2t");
+        extra.put("meta", meta);
+        qwenMessage.put("extra", extra);
+
+        qwenMessage.put("sub_chat_type", "t2t");
+        qwenMessage.put("parent_id", currentConversation.getQwenParentId());
+
+        return new JSONArray().put(qwenMessage);
+    }
+
     // Add agent prompt
     if ("Deepseek".equals(apiProvider)) {
       JSONObject agentPromptMessage = new JSONObject();
@@ -430,12 +462,6 @@ public class ChatActivity extends AppCompatActivity {
       agentPromptContent.put("role", "user");
       agentPromptContent.put("parts", new JSONArray().put(agentPromptPart));
       messagesArray.put(agentPromptContent);
-      currentContextLength += currentAgent.getPrompt().length();
-    } else if ("Alibaba".equals(apiProvider)) {
-      JSONObject agentPromptMessage = new JSONObject();
-      agentPromptMessage.put("role", "system");
-      agentPromptMessage.put("content", currentAgent.getPrompt());
-      messagesArray.put(agentPromptMessage);
       currentContextLength += currentAgent.getPrompt().length();
     }
 
@@ -482,7 +508,7 @@ public class ChatActivity extends AppCompatActivity {
       if (!msg.getType().equals("thinking") && !msg.getType().equals("error")) {
         String msgContent = msg.getContent();
         if (currentContextLength + msgContent.length() < currentMaxContextChars) {
-          if ("Deepseek".equals(apiProvider) || "Alibaba".equals(apiProvider)) {
+          if ("Deepseek".equals(apiProvider)) {
             JSONObject msgObject = new JSONObject();
             msgObject.put("role", msg.getRole());
             msgObject.put("content", msgContent);
@@ -504,7 +530,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     // Add current user message
-    if ("Deepseek".equals(apiProvider) || "Alibaba".equals(apiProvider)) {
+    if ("Deepseek".equals(apiProvider)) {
       JSONObject currentUserMsgObject = new JSONObject();
       currentUserMsgObject.put("role", "user");
       currentUserMsgObject.put("content", userMessageContent);
