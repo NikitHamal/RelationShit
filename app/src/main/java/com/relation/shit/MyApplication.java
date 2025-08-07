@@ -33,7 +33,7 @@ public class MyApplication extends Application {
             String stackTrace = sw.toString();
 
             SharedPreferences prefs = context.getSharedPreferences("CrashLog", MODE_PRIVATE);
-            prefs.edit().putString("stackTrace", stackTrace).apply();
+            prefs.edit().putString("stackTrace", stackTrace).commit();
 
             Intent intent = new Intent(context, DebugActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

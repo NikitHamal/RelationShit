@@ -142,11 +142,11 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
 
             // Show/hide API key sections based on provider
             if ("Alibaba".equals(selectedProvider)) {
-                dialogView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.GONE);
-                dialogView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.GONE);
+                rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.GONE);
+                rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.GONE);
             } else {
-                dialogView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.VISIBLE);
-                dialogView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.VISIBLE);
+                rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.VISIBLE);
+                rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.VISIBLE);
             }
         });
 
