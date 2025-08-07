@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.relation.shit.api.DeepseekApi;
 import com.relation.shit.api.GeminiApi;
+import com.relation.shit.api.QwenApi;
 import com.relation.shit.model.Agent;
 import com.relation.shit.utils.SharedPrefManager;
 
@@ -125,7 +126,7 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
         }
 
         // Populate API Provider Spinner
-        List<String> apiProviders = Arrays.asList("Deepseek", "Gemini");
+        List<String> apiProviders = Arrays.asList("Deepseek", "Gemini", "Alibaba");
         ArrayAdapter<String> apiProviderAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, apiProviders);
         apiProviderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerApiProvider.setAdapter(apiProviderAdapter);
@@ -143,6 +144,15 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedProvider = (String) parent.getItemAtPosition(position);
                 fetchAndPopulateModels(selectedProvider, spinnerModel, agentToEdit != null ? agentToEdit.getModel() : null);
+
+                // Show/hide API key sections based on provider
+                if ("Alibaba".equals(selectedProvider)) {
+                    rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.GONE);
+                    rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.GONE);
+                } else {
+                    rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.VISIBLE);
+                    rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
@@ -163,7 +173,14 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                     String prompt = editTextAgentPrompt.getText().toString().trim();
                     String emoji = editTextAgentEmoji.getText().toString().trim();
                     String apiProvider = (String) spinnerApiProvider.getSelectedItem();
-                    String model = (String) spinnerModel.getSelectedItem();
+                    String selectedModelText = (String) spinnerModel.getSelectedItem();
+                    String model;
+                    if (selectedModelText != null && selectedModelText.contains("(")) {
+                        model = selectedModelText.substring(selectedModelText.indexOf("(") + 1, selectedModelText.indexOf(")"));
+                    } else {
+                        model = selectedModelText;
+                    }
+
 
                     if (name.isEmpty() || prompt.isEmpty() || emoji.isEmpty() || apiProvider == null || model == null) {
                         Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
@@ -286,6 +303,37 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                 Toast.makeText(requireContext(), "Gemini API Key not set!", Toast.LENGTH_LONG).show();
                 latch.countDown();
             }
+        } else if ("Alibaba".equals(apiProvider)) {
+            QwenApi qwenApi = new QwenApi();
+            qwenApi.getModels(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Failed to fetch Qwen models: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    latch.countDown();
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    if (response.isSuccessful() && response.body() != null) {
+                        try {
+                            JSONObject jsonResponse = new JSONObject(response.body().string());
+                            JSONArray data = jsonResponse.getJSONArray("data");
+                            for (int i = 0; i < data.length(); i++) {
+                                JSONObject modelObject = data.getJSONObject(i);
+                                String modelId = modelObject.getString("id");
+                                String modelName = modelObject.getString("name");
+                                boolean supportsThinking = modelObject.getJSONObject("info").getJSONObject("capabilities").optBoolean("thinking", false);
+                                models.add(modelName + " (" + modelId + ")" + (supportsThinking ? " (Thinking)" : ""));
+                            }
+                        } catch (JSONException e) {
+                            requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Failed to parse Qwen models: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        }
+                    } else {
+                        requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Failed to fetch Qwen models: " + response.message(), Toast.LENGTH_LONG).show());
+                    }
+                    latch.countDown();
+                }
+            });
         }
 
         new Thread(() -> {

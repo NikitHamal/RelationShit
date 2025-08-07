@@ -26,6 +26,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.relation.shit.adapter.ChatAdapter;
 import com.relation.shit.api.DeepseekApiService;
 import com.relation.shit.api.GeminiApiService;
+import com.relation.shit.api.QwenApiService;
 import com.relation.shit.api.BaseApiService;
 import com.relation.shit.model.Agent;
 import com.relation.shit.model.Conversation;
@@ -100,6 +101,10 @@ public class ChatActivity extends AppCompatActivity {
       } else {
         currentMaxContextChars = MAX_CONTEXT_CHARS_GEMINI_PRO;
       }
+    } else if ("Alibaba".equals(currentAgent.getApiProvider())) {
+        apiService = new QwenApiService();
+        // Set context chars for Qwen models
+        currentMaxContextChars = 131072; // Default for now
     } else {
       Toast.makeText(this, "Error: Unknown API provider.", Toast.LENGTH_SHORT).show();
       finish();
@@ -114,6 +119,9 @@ public class ChatActivity extends AppCompatActivity {
     initializeViews();
     setupToolbar();
     loadOrCreateConversation(conversationId);
+    if (apiService instanceof QwenApiService) {
+        ((QwenApiService) apiService).setConversation(currentConversation);
+    }
     SUMMARY_TRIGGER_CHARS = (int) (currentMaxContextChars * SUMMARY_TRIGGER_PERCENTAGE);
     setupRecyclerView();
 
@@ -398,6 +406,39 @@ public class ChatActivity extends AppCompatActivity {
 
     String apiProvider = currentAgent.getApiProvider();
 
+    if ("Alibaba".equals(apiProvider)) {
+        // For Qwen, we only send the current message. History is managed server-side.
+        JSONObject qwenMessage = new JSONObject();
+        qwenMessage.put("fid", UUID.randomUUID().toString());
+        qwenMessage.put("parentId", currentConversation.getQwenParentId());
+        qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
+        qwenMessage.put("role", "user");
+        qwenMessage.put("content", userMessageContent);
+        qwenMessage.put("user_action", "chat");
+        qwenMessage.put("files", new JSONArray());
+        qwenMessage.put("timestamp", System.currentTimeMillis());
+        qwenMessage.put("models", new JSONArray().put(currentAgent.getModel()));
+        qwenMessage.put("chat_type", "t2t");
+
+        JSONObject featureConfig = new JSONObject();
+        featureConfig.put("thinking_enabled", true); // This could be a setting
+        featureConfig.put("output_schema", "phase");
+        featureConfig.put("thinking_budget", 38912);
+        qwenMessage.put("feature_config", featureConfig);
+
+        JSONObject extra = new JSONObject();
+        JSONObject meta = new JSONObject();
+        meta.put("subChatType", "t2t");
+        extra.put("meta", meta);
+        qwenMessage.put("extra", extra);
+
+        qwenMessage.put("sub_chat_type", "t2t");
+        qwenMessage.put("parent_id", currentConversation.getQwenParentId());
+
+        return new JSONArray().put(qwenMessage);
+    }
+
+
     // Add agent prompt
     if ("Deepseek".equals(apiProvider)) {
       JSONObject agentPromptMessage = new JSONObject();
@@ -492,7 +533,40 @@ public class ChatActivity extends AppCompatActivity {
       currentUserContent.put("role", "user");
       currentUserContent.put("parts", new JSONArray().put(currentUserPart));
       messagesArray.put(currentUserContent);
+    } else if ("Alibaba".equals(apiProvider)) {
+        // Qwen has a very specific message format
+        JSONArray qwenMessages = new JSONArray();
+        JSONObject qwenMessage = new JSONObject();
+        qwenMessage.put("fid", UUID.randomUUID().toString());
+        qwenMessage.put("parentId", currentConversation.getQwenParentId()); // This will be null for the first message
+        qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
+        qwenMessage.put("role", "user");
+        qwenMessage.put("content", userMessageContent);
+        qwenMessage.put("user_action", "chat");
+        qwenMessage.put("files", new JSONArray());
+        qwenMessage.put("timestamp", System.currentTimeMillis());
+        qwenMessage.put("models", new JSONArray().put(currentAgent.getModel()));
+        qwenMessage.put("chat_type", "t2t");
+
+        JSONObject featureConfig = new JSONObject();
+        featureConfig.put("thinking_enabled", true); // Or get from agent settings
+        featureConfig.put("output_schema", "phase");
+        featureConfig.put("thinking_budget", 38912);
+        qwenMessage.put("feature_config", featureConfig);
+
+        JSONObject extra = new JSONObject();
+        JSONObject meta = new JSONObject();
+        meta.put("subChatType", "t2t");
+        extra.put("meta", meta);
+        qwenMessage.put("extra", extra);
+
+        qwenMessage.put("sub_chat_type", "t2t");
+        qwenMessage.put("parent_id", currentConversation.getQwenParentId());
+
+        qwenMessages.put(qwenMessage);
+        return qwenMessages; // Return the new format
     }
+
 
     return messagesArray;
   }

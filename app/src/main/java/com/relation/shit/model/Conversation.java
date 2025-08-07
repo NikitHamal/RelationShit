@@ -10,6 +10,8 @@ public class Conversation implements Serializable {
     private Agent agent;
     private long timestamp;
     private List<Message> messages;
+    private String qwenChatId;
+    private String qwenParentId;
 
     public Conversation(String id, String title, Agent agent, long timestamp) {
         this.id = id;
@@ -17,6 +19,8 @@ public class Conversation implements Serializable {
         this.agent = agent;
         this.timestamp = timestamp;
         this.messages = new ArrayList<>();
+        this.qwenChatId = null;
+        this.qwenParentId = null;
     }
 
     public String getId() {
@@ -45,5 +49,21 @@ public class Conversation implements Serializable {
 
     public void setMessages(List<Message> messages) {
         this.messages = messages;
+    }
+
+    public String getQwenChatId() {
+        return qwenChatId;
+    }
+
+    public void setQwenChatId(String qwenChatId) {
+        this.qwenChatId = qwenChatId;
+    }
+
+    public String getQwenParentId() {
+        return qwenParentId;
+    }
+
+    public void setQwenParentId(String qwenParentId) {
+        this.qwenParentId = qwenParentId;
     }
 }
