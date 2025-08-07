@@ -22,8 +22,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Clear Gradle caches
+        run: |
+          ./gradlew clean
+          rm -rf ~/.gradle/caches/
+          rm -rf .gradle/
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Verify Gradle version
+        run: ./gradlew --version
 
       - name: Build Release APK
         run: ./gradlew assembleRelease
