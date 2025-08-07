@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 import android.widget.LinearLayout; // Import LinearLayout
 
@@ -112,8 +112,8 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
         EditText editTextAgentName = dialogView.findViewById(R.id.edit_text_agent_name);
         EditText editTextAgentPrompt = dialogView.findViewById(R.id.edit_text_agent_prompt);
         EditText editTextAgentEmoji = dialogView.findViewById(R.id.edit_text_agent_emoji);
-        Spinner spinnerApiProvider = dialogView.findViewById(R.id.spinner_api_provider);
-        Spinner spinnerModel = dialogView.findViewById(R.id.spinner_model);
+        AutoCompleteTextView autoCompleteApiProvider = dialogView.findViewById(R.id.auto_complete_api_provider);
+        AutoCompleteTextView autoCompleteModel = dialogView.findViewById(R.id.auto_complete_model);
 
         boolean isEditing = (agentToEdit != null);
         String dialogTitle = isEditing ? "Edit Agent" : "Create New Agent";
@@ -125,45 +125,34 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
             editTextAgentEmoji.setText(agentToEdit.getEmoji());
         }
 
-        // Populate API Provider Spinner
+        // Populate API Provider Dropdown
         List<String> apiProviders = Arrays.asList("Deepseek", "Gemini", "Alibaba");
-        ArrayAdapter<String> apiProviderAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, apiProviders);
-        apiProviderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerApiProvider.setAdapter(apiProviderAdapter);
+        ArrayAdapter<String> apiProviderAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, apiProviders);
+        autoCompleteApiProvider.setAdapter(apiProviderAdapter);
 
         if (isEditing) {
-            int providerPosition = apiProviderAdapter.getPosition(agentToEdit.getApiProvider());
-            if (providerPosition != -1) {
-                spinnerApiProvider.setSelection(providerPosition);
-            }
+            autoCompleteApiProvider.setText(agentToEdit.getApiProvider(), false);
         }
 
         // Listener for API Provider selection to update models
-        spinnerApiProvider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedProvider = (String) parent.getItemAtPosition(position);
-                fetchAndPopulateModels(selectedProvider, spinnerModel, agentToEdit != null ? agentToEdit.getModel() : null);
+        autoCompleteApiProvider.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedProvider = (String) parent.getItemAtPosition(position);
+            autoCompleteModel.setText(""); // Clear model selection
+            fetchAndPopulateModels(selectedProvider, autoCompleteModel, null);
 
-                // Show/hide API key sections based on provider
-                if ("Alibaba".equals(selectedProvider)) {
-                    rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.GONE);
-                    rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.GONE);
-                } else {
-                    rootView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.VISIBLE);
-                    rootView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
+            // Show/hide API key sections based on provider
+            if ("Alibaba".equals(selectedProvider)) {
+                dialogView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.GONE);
+                dialogView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.GONE);
+            } else {
+                dialogView.findViewById(R.id.deepseek_api_key_layout).setVisibility(View.VISIBLE);
+                dialogView.findViewById(R.id.gemini_api_key_layout).setVisibility(View.VISIBLE);
             }
         });
 
         // Initial model population based on default or existing agent's provider
         String initialProvider = isEditing ? agentToEdit.getApiProvider() : apiProviders.get(0);
-        fetchAndPopulateModels(initialProvider, spinnerModel, agentToEdit != null ? agentToEdit.getModel() : null);
+        fetchAndPopulateModels(initialProvider, autoCompleteModel, agentToEdit != null ? agentToEdit.getModel() : null);
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(dialogTitle)
@@ -172,8 +161,8 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                     String name = editTextAgentName.getText().toString().trim();
                     String prompt = editTextAgentPrompt.getText().toString().trim();
                     String emoji = editTextAgentEmoji.getText().toString().trim();
-                    String apiProvider = (String) spinnerApiProvider.getSelectedItem();
-                    String selectedModelText = (String) spinnerModel.getSelectedItem();
+                    String apiProvider = autoCompleteApiProvider.getText().toString();
+                    String selectedModelText = autoCompleteModel.getText().toString();
                     String model;
                     if (selectedModelText != null && selectedModelText.contains("(")) {
                         model = selectedModelText.substring(selectedModelText.indexOf("(") + 1, selectedModelText.indexOf(")"));
@@ -207,7 +196,7 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                 .show();
     }
 
-    private void fetchAndPopulateModels(String apiProvider, Spinner spinner, @Nullable String selectedModel) {
+    private void fetchAndPopulateModels(String apiProvider, AutoCompleteTextView autoCompleteTextView, @Nullable String selectedModel) {
         List<String> models = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -320,9 +309,16 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                             JSONArray data = jsonResponse.getJSONArray("data");
                             for (int i = 0; i < data.length(); i++) {
                                 JSONObject modelObject = data.getJSONObject(i);
-                                String modelId = modelObject.getString("id");
-                                String modelName = modelObject.getString("name");
-                                boolean supportsThinking = modelObject.getJSONObject("info").getJSONObject("capabilities").optBoolean("thinking", false);
+                                String modelId = modelObject.optString("id");
+                                String modelName = modelObject.optString("name");
+                                boolean supportsThinking = false;
+                                JSONObject info = modelObject.optJSONObject("info");
+                                if (info != null) {
+                                    JSONObject capabilities = info.optJSONObject("capabilities");
+                                    if (capabilities != null) {
+                                        supportsThinking = capabilities.optBoolean("thinking", false);
+                                    }
+                                }
                                 models.add(modelName + " (" + modelId + ")" + (supportsThinking ? " (Thinking)" : ""));
                             }
                         } catch (JSONException e) {
@@ -340,13 +336,15 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
             try {
                 latch.await(); // Wait for API call to complete
                 requireActivity().runOnUiThread(() -> {
-                    ArrayAdapter<String> modelAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, models);
-                    modelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spinner.setAdapter(modelAdapter);
+                    ArrayAdapter<String> modelAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, models);
+                    autoCompleteTextView.setAdapter(modelAdapter);
                     if (selectedModel != null) {
-                        int spinnerPosition = modelAdapter.getPosition(selectedModel);
-                        if (spinnerPosition != -1) {
-                            spinner.setSelection(spinnerPosition);
+                        // Find the full model text from the list to set it
+                        for (String modelText : models) {
+                            if (modelText.contains("(" + selectedModel + ")")) {
+                                autoCompleteTextView.setText(modelText, false);
+                                break;
+                            }
                         }
                     }
                 });
