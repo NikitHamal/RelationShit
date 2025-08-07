@@ -350,7 +350,7 @@ public class InsightsActivity extends AppCompatActivity implements SurveyAdapter
 
         TextView questionTextView = new TextView(this);
         questionTextView.setText((index + 1) + ". " + questionText);
-        questionTextView.setTextAppearance(R.style.TextAppearance_MaterialComponents_Headline6);
+        questionTextView.setTextAppearance(android.R.style.TextAppearance_DeviceDefault_Medium);
         questionTextView.setTypeface(ResourcesCompat.getFont(this, R.font.sem));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
