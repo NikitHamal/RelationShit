@@ -312,9 +312,10 @@ public class SettingsFragment extends Fragment implements AgentAdapter.OnAgentCl
                         requireActivity().runOnUiThread(() -> {
                             try {
                                 JSONObject jsonResponse = new JSONObject(responseBody);
-                                JSONArray data = jsonResponse.getJSONArray("data");
-                                for (int i = 0; i < data.length(); i++) {
-                                    JSONObject modelObject = data.getJSONObject(i);
+                                JSONObject outerData = jsonResponse.getJSONObject("data");
+                                JSONArray dataArray = outerData.getJSONArray("data");
+                                for (int i = 0; i < dataArray.length(); i++) {
+                                    JSONObject modelObject = dataArray.getJSONObject(i);
                                     String modelId = modelObject.optString("id");
                                     String modelName = modelObject.optString("name");
                                     boolean supportsThinking = false;
