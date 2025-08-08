@@ -22,11 +22,10 @@
             android:id="@+id/text_message_body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp"
+            android:padding="8dp"
             android:text="This is a user message."
             android:textColor="?attr/colorOnPrimary"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textIsSelectable="true" />
 
     </com.google.android.material.card.MaterialCardView>

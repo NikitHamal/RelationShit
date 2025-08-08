@@ -210,6 +210,7 @@ public class ChatActivity extends AppCompatActivity {
             return true;
           } else if (itemId == R.id.action_insights) {
             if (currentConversation != null) {
+              sharedPrefManager.updateConversation(currentConversation); // Explicitly save before launching
               try {
                 Intent intent = new Intent(ChatActivity.this, InsightsActivity.class);
                 intent.putExtra("conversation_id", currentConversation.getId());
@@ -282,6 +283,7 @@ public class ChatActivity extends AppCompatActivity {
                   } else {
                       currentAiMessage.setContent(currentAiMessage.getContent() + partialResult);
                       chatAdapter.notifyItemChanged(messageList.size() - 1);
+                      chatRecyclerview.scrollToPosition(messageList.size() - 1);
                   }
               });
           }
@@ -417,11 +419,25 @@ public class ChatActivity extends AppCompatActivity {
     String apiProvider = currentAgent.getApiProvider();
 
     if ("Alibaba".equals(apiProvider)) {
-        String finalContent = userMessageContent;
-        // Check if this is the first user message in the conversation
+        StringBuilder contentBuilder = new StringBuilder();
+
+        // Prepend system prompt for the first message
         if (messageList.size() <= 2) { // User message + thinking message
-            finalContent = currentAgent.getPrompt() + "\n\n" + userMessageContent;
+            contentBuilder.append(currentAgent.getPrompt()).append("\n\n");
         }
+
+        // Prepend relevant knowledge
+        List<Knowledge> relevantKnowledge = sharedPrefManager.getKnowledgeBasesForConversation(currentConversation.getId());
+        if (!relevantKnowledge.isEmpty()) {
+            contentBuilder.append("--- Knowledge Base ---\n");
+            for (Knowledge kb : relevantKnowledge) {
+                contentBuilder.append(kb.getTitle()).append(": ").append(kb.getContent()).append("\n");
+            }
+            contentBuilder.append("--- End Knowledge Base ---\n\n");
+        }
+
+        contentBuilder.append(userMessageContent);
+        String finalContent = contentBuilder.toString();
 
         // For Qwen, we only send the current message. History is managed server-side.
         JSONObject qwenMessage = new JSONObject();
