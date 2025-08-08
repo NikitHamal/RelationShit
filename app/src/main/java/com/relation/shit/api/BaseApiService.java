@@ -6,7 +6,7 @@ import com.relation.shit.model.Knowledge;
 public interface BaseApiService {
 
     interface ApiResponseCallback<T> {
-        void onUpdate(T partialResult);
+        default void onUpdate(T partialResult) {}
         void onSuccess(T result);
         void onError(String errorMessage);
     }
