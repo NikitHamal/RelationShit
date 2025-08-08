@@ -30,11 +30,7 @@ public class QwenApiService implements BaseApiService {
     @Override
     public void getChatCompletion(String model, JSONArray messages, ApiResponseCallback<String> callback) {
         try {
-            // This is the actual user message payload
-            final JSONArray userMessages = messages;
-
             if (conversation.getQwenChatId() == null) {
-                // New conversation: Chain of calls -> newChat -> primeWithSystemPrompt -> sendUserMessage
                 qwenApi.newChat(model, new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -50,7 +46,7 @@ public class QwenApiService implements BaseApiService {
                                 if (jsonResponse.getBoolean("success")) {
                                     String chatId = jsonResponse.getJSONObject("data").getString("id");
                                     conversation.setQwenChatId(chatId);
-                                    primeWithSystemPrompt(model, userMessages, callback);
+                                    performCompletion(model, messages, callback);
                                 } else {
                                     callback.onError("Failed to create new Qwen chat.");
                                 }
@@ -63,62 +59,11 @@ public class QwenApiService implements BaseApiService {
                     }
                 });
             } else {
-                // Existing conversation, just send the user message
-                performCompletion(model, userMessages, callback);
+                performCompletion(model, messages, callback);
             }
         } catch (JSONException e) {
             callback.onError("Failed to build request: " + e.getMessage());
         }
-    }
-
-    private void primeWithSystemPrompt(String model, JSONArray userMessages, ApiResponseCallback<String> callback) throws JSONException {
-        // Create a payload for the system prompt
-        JSONArray systemPromptPayload = new JSONArray().put(new JSONObject()
-            .put("role", "user") // Qwen doesn't have a system role, send as user
-            .put("content", conversation.getAgent().getPrompt()));
-
-        qwenApi.getChatCompletion(conversation.getQwenChatId(), null, model, systemPromptPayload, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                callback.onError("Failed to send system prompt: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    callback.onError("AI error on system prompt: " + response.code());
-                    return;
-                }
-                // We need to consume the response body to find the new parentId
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body().byteStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.startsWith("data:")) {
-                            String jsonData = line.substring(5).trim();
-                            if (jsonData.isEmpty()) continue;
-                            try {
-                                JSONObject data = new JSONObject(jsonData);
-                                if (data.has("response.created")) {
-                                    JSONObject created = data.getJSONObject("response.created");
-                                    conversation.setQwenParentId(created.getString("response_id"));
-                                    // Now that we have the parentId from the system prompt response, send the actual user message
-                                    try {
-                                        performCompletion(model, userMessages, callback);
-                                    } catch (JSONException jsonException) {
-                                        callback.onError("Failed to build user message request: " + jsonException.getMessage());
-                                    }
-                                    return; // Exit after we found what we need
-                                }
-                            } catch (JSONException e) {
-                                // Ignore parsing errors in other chunks
-                            }
-                        }
-                    }
-                    // If we get here, we didn't find the response.created chunk
-                    callback.onError("Could not get parentId from system prompt response.");
-                }
-            }
-        });
     }
 
     private void performCompletion(String model, JSONArray messages, ApiResponseCallback<String> callback) throws JSONException {
@@ -148,10 +93,7 @@ public class QwenApiService implements BaseApiService {
                                 if (data.has("response.created")) {
                                     JSONObject created = data.getJSONObject("response.created");
                                     conversation.setQwenParentId(created.getString("response_id"));
-                                    continue;
-                                }
-
-                                if (data.has("choices")) {
+                                } else if (data.has("choices")) {
                                     JSONArray choices = data.getJSONArray("choices");
                                     if (choices.length() > 0) {
                                         JSONObject choice = choices.getJSONObject(0);

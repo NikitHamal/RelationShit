@@ -417,13 +417,19 @@ public class ChatActivity extends AppCompatActivity {
     String apiProvider = currentAgent.getApiProvider();
 
     if ("Alibaba".equals(apiProvider)) {
+        String finalContent = userMessageContent;
+        // Check if this is the first user message in the conversation
+        if (messageList.size() <= 2) { // User message + thinking message
+            finalContent = currentAgent.getPrompt() + "\n\n" + userMessageContent;
+        }
+
         // For Qwen, we only send the current message. History is managed server-side.
         JSONObject qwenMessage = new JSONObject();
         qwenMessage.put("fid", UUID.randomUUID().toString());
         qwenMessage.put("parentId", currentConversation.getQwenParentId()); // This will be null for the first message
         qwenMessage.put("childrenIds", new JSONArray().put(UUID.randomUUID().toString()));
         qwenMessage.put("role", "user");
-        qwenMessage.put("content", userMessageContent);
+        qwenMessage.put("content", finalContent);
         qwenMessage.put("user_action", "chat");
         qwenMessage.put("files", new JSONArray());
         qwenMessage.put("timestamp", System.currentTimeMillis());
